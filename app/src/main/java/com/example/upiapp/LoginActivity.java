@@ -16,7 +16,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText editPhoneNumber, editOtp;
     private Button btnLogin;
     private LocalDataStore dataStore;
-    private final String DUMMY_OTP = "1234";
+    private final String DUMMY_OTP = "1236";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
