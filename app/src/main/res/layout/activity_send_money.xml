@@ -33,6 +33,15 @@
         android:background="@android:drawable/editbox_background"
         android:layout_marginBottom="16dp"/>
 
+    <Button
+        android:id="@+id/btn_scan_qr"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scan QR Code"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="#673AB7"/>
+
     <EditText
         android:id="@+id/edit_message"
         android:layout_width="match_parent"

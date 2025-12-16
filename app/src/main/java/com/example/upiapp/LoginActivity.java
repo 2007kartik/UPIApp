@@ -21,6 +21,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private TextView textSignupInstead;
     private LocalDataStore dataStore;
+    private final String DUMMY_OTP = "1236";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
