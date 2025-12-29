@@ -1,11 +1,20 @@
 package com.example.upiapp.models;
 
 public class LoginRequest {
-    public String upiId; // Matches contract field [cite: 19]
-    public String password; // Matches contract field [cite: 20]
 
-    public LoginRequest(String upild, String password) {
-        this.upiId = upild;
+    private String upiId;
+    private String password;
+
+    public LoginRequest(String upiId, String password) {
+        this.upiId = upiId;
         this.password = password;
+    }
+
+    public String getUpiId() {
+        return upiId;
+    }
+
+    public String getPassword() {
+        return password;
     }
 }

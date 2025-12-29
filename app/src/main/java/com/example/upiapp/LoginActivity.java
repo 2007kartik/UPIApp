@@ -91,8 +91,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void performLogin() {
-        String inputUsername = editUsername.getText().toString().trim();
-        String inputPassword = editPassword.getText().toString().trim();
 
 //        // 1. Retrieve the saved credentials from LocalDataStore
 //        final String savedUsername = dataStore.getSavedUsername();
@@ -168,4 +166,5 @@ public class LoginActivity extends AppCompatActivity {
 //            Toast.makeText(LoginActivity.this, "Invalid Username or Password.", Toast.LENGTH_SHORT).show();
 //        }
     }
+
 }

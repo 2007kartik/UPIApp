@@ -52,6 +52,15 @@ public class LocalDataStore {
         return sharedPrefs.getString(KEY_USER_PIN, null);
     }
 
+    public void saveAuthToken(String token) {
+        sharedPrefs.edit().putString("AUTH_TOKEN", token).apply();
+    }
+
+    public String getAuthToken() {
+        return sharedPrefs.getString("AUTH_TOKEN", null);
+    }
+
+
     public LocalDataStore(Context context) {
         sharedPrefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         editor = sharedPrefs.edit();
