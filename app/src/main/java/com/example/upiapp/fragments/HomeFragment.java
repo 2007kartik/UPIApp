@@ -16,7 +16,6 @@ import androidx.fragment.app.Fragment;
 import com.example.upiapp.R;
 import com.example.upiapp.ReceiveMoneyActivity;
 import com.example.upiapp.SendMoneyActivity;
-import com.example.upiapp.DeveloperPaymentActivity; // Import the Developer Payment Activity
 import com.example.upiapp.utils.LocalDataStore; // Import LocalDataStore
 
 public class HomeFragment extends Fragment {

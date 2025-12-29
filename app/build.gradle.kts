@@ -47,4 +47,5 @@ dependencies {
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.google.zxing:core:3.5.1")
     implementation("androidx.cardview:cardview:1.0.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }

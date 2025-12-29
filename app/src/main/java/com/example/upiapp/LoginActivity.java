@@ -18,6 +18,7 @@ import com.example.upiapp.models.LoginRequest;
 import com.example.upiapp.models.LoginResponse;
 import com.example.upiapp.service.ApiService;
 import com.example.upiapp.utils.LocalDataStore;
+import com.example.upiapp.utils.SecurePrefManager;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -91,59 +92,79 @@ public class LoginActivity extends AppCompatActivity {
 
     private void performLogin() {
 
-        String upiId = editUsername.getText().toString().trim();
-        String password = editPassword.getText().toString().trim();
+//        // 1. Retrieve the saved credentials from LocalDataStore
+//        final String savedUsername = dataStore.getSavedUsername();
+//        final String savedPassword = dataStore.getSavedPassword();
+//
+//        // Check if input fields are empty
+//        if (inputUsername.isEmpty() || inputPassword.isEmpty()) {
+//            Toast.makeText(LoginActivity.this, "Please enter both Username and Password.", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+//
+//        // 2. Check if a user has signed up yet (i.e., if credentials exist)
+//        if (savedUsername == null || savedPassword == null) {
+//            Toast.makeText(LoginActivity.this, "No user registered yet. Please Sign Up.", Toast.LENGTH_LONG).show();
+//            return;
+//        }
+//
+//        // 3. Validate input against saved credentials
+//        if (inputUsername.equals(savedUsername) && inputPassword.equals(savedPassword)) {
 
-        if (upiId.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Please enter UPI ID and Password", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // 1. Initialize the Utility Class
+        SecurePrefManager prefManager = new SecurePrefManager(LoginActivity.this);
 
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        ApiService apiService = ApiClient.getClient(this);
+        // Prepare Login Data using upiId
+        LoginRequest loginRequest = new LoginRequest(inputUsername, inputPassword);  // [cite: 19, 20]
 
-        LoginRequest request = new LoginRequest(upiId, password);
-
-        apiService.login(request).enqueue(new retrofit2.Callback<LoginResponse>() {
+        apiService.login(loginRequest).enqueue(new retrofit2.Callback<LoginResponse>() {
             @Override
             public void onResponse(retrofit2.Call<LoginResponse> call,
                                    retrofit2.Response<LoginResponse> response) {
-
                 if (response.isSuccessful() && response.body() != null) {
+                    LoginResponse loginData = response.body();
 
-                    LoginResponse loginResponse = response.body();
+                    // 3. Extract JWT Token from response body [cite: 24]
+                    String jwtToken = response.body().token;
 
-                    // ✅ Save JWT token
-                    dataStore.saveAuthToken(loginResponse.getToken());
-                    Log.d("LOGIN", "Token: " + loginResponse.getToken());
+                    // 4. USE UTILITY METHOD to store the token securely
+                    prefManager.saveToken(jwtToken);
 
-                    // ✅ Save user details)
+                    // Accessing corrected field
+                    String userIdentifier = loginData.user.upiId;
+                    Log.d("LOGIN", "Logged in as: " + userIdentifier + " JWT Token: " + loginData.token);
 
-                    // ✅ Mark user logged in
+                    Toast.makeText(getApplicationContext(), "Login Successful", Toast.LENGTH_SHORT).show();
+
+                    // Login Success
                     dataStore.setLoggedIn(true);
 
-                    Toast.makeText(LoginActivity.this,
-                            "Login successful! Welcome " + loginResponse.getUser().getName(),
-                            Toast.LENGTH_SHORT).show();
+                    // Notify user and prompt for the next required step (Set PIN)
+                    Toast.makeText(LoginActivity.this, "Login Successful! Please set your UPI PIN.", Toast.LENGTH_SHORT).show();
 
-                    // Redirect to Set PIN / Main flow
+                    // *** REDIRECT TO THE NEW SET PIN ACTIVITY ***
                     Intent intent = new Intent(LoginActivity.this, SetPinActivity.class);
                     startActivity(intent);
-                    finish();
+                    finish(); // Close the login screen
 
                 } else {
-                    Toast.makeText(LoginActivity.this,
-                            "Invalid credentials" + response.message(),
-                            Toast.LENGTH_SHORT).show();
+                    Log.e("LOGIN", "Error Code: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<LoginResponse> call, Throwable t) {
-                Toast.makeText(LoginActivity.this,
-                        "Network error: " + t.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                Log.e("LOGIN", "Network Error", t);
             }
         });
+
+
+
+//        } else {
+//            // Login Failed
+//            Toast.makeText(LoginActivity.this, "Invalid Username or Password.", Toast.LENGTH_SHORT).show();
+//        }
     }
 
 }

@@ -67,6 +67,8 @@ public class SignupActivity extends AppCompatActivity {
         String password = editPassword.getText().toString().trim();
         String confirmPassword = editConfirmPassword.getText().toString().trim();
 
+        String upiID = name + "@mockupi";
+
         // Simple validation for the demo
         if (mobile.isEmpty() || name.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, "Please fill in all fields.", Toast.LENGTH_SHORT).show();
@@ -84,14 +86,14 @@ public class SignupActivity extends AppCompatActivity {
         }
 
         // --- DEMO SUCCESS LOGIC ---
-        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+        ApiService apiService = ApiClient.getClient(this);
 
         SignupRequest request = new SignupRequest(
-                mobile,
-                "User A",
-                "pass123",
+                upiID,
+                name,
+                password,
                 "1234",
-                "9999999999",
+                mobile,
                 "DEVICE_A"
         );
         Log.d("SIGNUP", "Processing");
@@ -102,6 +104,17 @@ public class SignupActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     // Signup success
                     Log.d("SIGNUP", "Signup successful");
+
+                    // 1. Store the registered credentials AND NAME in LocalDataStore
+                    dataStore.saveUserCredentials(mobile, password, name); // <-- UPDATED CALL
+
+                    Toast.makeText(SignupActivity.this, "Sign Up Successful! Credentials Saved. Redirecting to Login. Login with UPI ID: " + upiID, Toast.LENGTH_LONG).show();
+
+                    // 2. After successful dummy sign up, redirect to the login page
+                    Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    finish();
+
                 } else {
                     // Error response (500, 400, etc.)
                     Log.e("SIGNUP", "Signup failed: " + response.code() + response.message());
@@ -113,17 +126,5 @@ public class SignupActivity extends AppCompatActivity {
                 Log.e("SIGNUP", "Network error", t);
             }
         });
-
-
-
-        // 1. Store the registered credentials AND NAME in LocalDataStore
-        dataStore.saveUserCredentials(mobile, password, name); // <-- UPDATED CALL
-
-        Toast.makeText(this, "Sign Up Successful! Credentials Saved. Redirecting to Login.", Toast.LENGTH_LONG).show();
-
-        // 2. After successful dummy sign up, redirect to the login page
-        Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
-        startActivity(intent);
-        finish();
     }
 }
