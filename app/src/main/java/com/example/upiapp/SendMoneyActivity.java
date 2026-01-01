@@ -2,8 +2,10 @@ package com.example.upiapp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -30,6 +32,32 @@ public class SendMoneyActivity extends AppCompatActivity {
 
         btnScanQr.setOnClickListener(v -> startQrScanner());
         btnPay.setOnClickListener(v -> initiatePaymentFlow());
+
+        ImageButton btnBack = findViewById(R.id.btn_back);
+
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Animation
+                v.animate()
+                        .scaleX(0.85f)
+                        .scaleY(0.85f)
+                        .setDuration(100)
+                        .withEndAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                v.animate()
+                                        .scaleX(1f)
+                                        .scaleY(1f)
+                                        .setDuration(100)
+                                        .start();
+
+                                finish(); // Just closes current activity
+                            }
+                        })
+                        .start();
+            }
+        });
     }
 
     // 🔹 START QR SCANNER

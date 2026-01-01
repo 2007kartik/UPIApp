@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +44,33 @@ public class ConfirmPinActivity extends AppCompatActivity {
         textPaymentSummary.setText(String.format("Paying ₹%.2f to %s", amount, receiverId));
 
         btnConfirmPayment.setOnClickListener(v -> initiateFinalTransaction());
+
+
+        ImageButton btnBack = findViewById(R.id.btn_back);
+
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Animation
+                v.animate()
+                        .scaleX(0.85f)
+                        .scaleY(0.85f)
+                        .setDuration(100)
+                        .withEndAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                v.animate()
+                                        .scaleX(1f)
+                                        .scaleY(1f)
+                                        .setDuration(100)
+                                        .start();
+
+                                finish(); // Just closes current activity
+                            }
+                        })
+                        .start();
+            }
+        });
     }
 
     private void initiateFinalTransaction() {
