@@ -5,16 +5,19 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
-import com.example.upiapp.utils.LocalDataStore;
+import com.example.upiapp.models.ProfileResponse;
+import com.example.upiapp.service.ApiService;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.common.BitMatrix;
@@ -24,9 +27,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class ReceiveMoneyActivity extends AppCompatActivity {
 
-    private LocalDataStore dataStore;
     private TextView textReceiveUpiId;
     private ImageView imageQrCode;
     private Button btnShareUpiId;
@@ -39,56 +45,56 @@ public class ReceiveMoneyActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_receive_money);
 
-        dataStore = new LocalDataStore(this);
-
         textReceiveUpiId = findViewById(R.id.text_receive_upi_id);
         imageQrCode = findViewById(R.id.image_qr_code);
         btnShareUpiId = findViewById(R.id.btn_share_upi_id);
 
-        displayUserUpiId();
-        generateQrCode();
+        // Fetch user data from backend as per API contract
+        fetchProfileAndGenerateQR();
 
         btnShareUpiId.setOnClickListener(v -> shareUpiIdAndQr());
     }
 
-    // 🔹 Fetch user and show UPI ID
-    private void displayUserUpiId() {
-        String mobileNumber = dataStore.getSavedUsername();
+    private void fetchProfileAndGenerateQR() {
+        // ApiClient handles the "Authorization: Bearer <JWT>" header automatically
+        ApiService apiService = ApiClient.getClient(this);
 
-        if (mobileNumber != null && !mobileNumber.isEmpty()) {
-            userUpiId = mobileNumber + "@demoupi";
-            userName = mobileNumber;
-            textReceiveUpiId.setText(userUpiId);
-        } else {
-            userUpiId = null;
-            Toast.makeText(this, "User data missing. Please login again.", Toast.LENGTH_LONG).show();
-        }
+        apiService.getProfile().enqueue(new Callback<ProfileResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ProfileResponse> call, @NonNull Response<ProfileResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Mapping data from Profile API
+                    userUpiId = response.body().upiId; // [cite: 42]
+                    userName = response.body().name;   // [cite: 43]
+
+                    textReceiveUpiId.setText(userUpiId);
+                    generateQrCode();
+                } else {
+                    Log.e("RECEIVE_MONEY", "Failed to fetch profile: " + response.code());
+                    Toast.makeText(ReceiveMoneyActivity.this, "Could not fetch user identity", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ProfileResponse> call, @NonNull Throwable t) {
+                Log.e("RECEIVE_MONEY", "Network error", t);
+                Toast.makeText(ReceiveMoneyActivity.this, "Check your internet connection", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    // 🔹 QR CODE GENERATION (MAIN LOGIC)
-    // 🔹 QR CODE GENERATION (CUSTOM UPI FORMAT LIKE WIFI QR)
-    // 🔹 QR CODE GENERATION (CUSTOM UPI FORMAT LIKE WIFI QR)
     private void generateQrCode() {
         if (userUpiId == null || userName == null) return;
 
         try {
-            // Custom structured QR content (WiFi-style)
-            String qrContent =
-                    "UPI:\n" +
-                            "ID=" + userUpiId + ";\n" +
-                            "NAME=" + userName + ";";
+            // Structured QR content for the UPI simulator
+            String qrContent = "UPI:\nID=" + userUpiId + ";\nNAME=" + userName + ";";
 
             MultiFormatWriter writer = new MultiFormatWriter();
-            BitMatrix bitMatrix = writer.encode(
-                    qrContent,
-                    BarcodeFormat.QR_CODE,
-                    600,
-                    600
-            );
+            BitMatrix bitMatrix = writer.encode(qrContent, BarcodeFormat.QR_CODE, 600, 600);
 
             BarcodeEncoder encoder = new BarcodeEncoder();
             Bitmap bitmap = encoder.createBitmap(bitMatrix);
-
             imageQrCode.setImageBitmap(bitmap);
 
         } catch (Exception e) {
@@ -97,51 +103,38 @@ public class ReceiveMoneyActivity extends AppCompatActivity {
         }
     }
 
-
-
-    // 🔹 Share UPI ID + QR Image
     private void shareUpiIdAndQr() {
         if (userUpiId == null) {
-            Toast.makeText(this, "UPI ID not available", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "UPI ID not ready yet", Toast.LENGTH_SHORT).show();
             return;
         }
 
         Uri imageUri = getQrImageUri();
-
         if (imageUri != null) {
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("image/png");
             intent.putExtra(Intent.EXTRA_STREAM, imageUri);
-            intent.putExtra(Intent.EXTRA_TEXT,
-                    "My UPI ID: " + userUpiId + "\nScan this QR to pay me.");
+            intent.putExtra(Intent.EXTRA_TEXT, "Pay me using my UPI ID: " + userUpiId);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
             startActivity(Intent.createChooser(intent, "Share UPI via"));
         }
     }
 
-    // 🔹 Convert ImageView QR to sharable URI
     private Uri getQrImageUri() {
         try {
             BitmapDrawable drawable = (BitmapDrawable) imageQrCode.getDrawable();
-            Bitmap bitmap = drawable.getBitmap();
+            if (drawable == null) return null;
 
+            Bitmap bitmap = drawable.getBitmap();
             File cachePath = new File(getCacheDir(), "images");
             cachePath.mkdirs();
-
             File file = new File(cachePath, "upi_qr.png");
             FileOutputStream stream = new FileOutputStream(file);
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
             stream.close();
 
-            return FileProvider.getUriForFile(
-                    this,
-                    "com.example.upiapp.fileprovider",
-                    file
-            );
-
+            return FileProvider.getUriForFile(this, "com.example.upiapp.fileprovider", file);
         } catch (IOException e) {
-            e.printStackTrace();
             return null;
         }
     }

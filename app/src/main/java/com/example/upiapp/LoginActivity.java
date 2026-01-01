@@ -34,15 +34,15 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        dataStore = new LocalDataStore(this);
-
-        // CHECK LOGIN STATUS FIRST (Crucial for the overall flow)
-        if (dataStore.isLoggedIn()) {
-            // NOTE: If you decide to add PIN validation on startup, this needs to check for a PIN too.
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            finish();
-            return;
-        }
+//        dataStore = new LocalDataStore(this);
+//
+//        // CHECK LOGIN STATUS FIRST (Crucial for the overall flow)
+//        if (dataStore.isLoggedIn()) {
+//            // NOTE: If you decide to add PIN validation on startup, this needs to check for a PIN too.
+//            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+//            finish();
+//            return;
+//        }
 
         // Initialize UI components
         editUsername = findViewById(R.id.edit_username);
@@ -91,7 +91,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void performLogin() {
-
+        String inputUsername = editUsername.getText().toString().trim();
+        String inputPassword = editPassword.getText().toString().trim();
 //        // 1. Retrieve the saved credentials from LocalDataStore
 //        final String savedUsername = dataStore.getSavedUsername();
 //        final String savedPassword = dataStore.getSavedPassword();
@@ -126,19 +127,19 @@ public class LoginActivity extends AppCompatActivity {
                     LoginResponse loginData = response.body();
 
                     // 3. Extract JWT Token from response body [cite: 24]
-                    String jwtToken = response.body().token;
+                    String jwtToken = response.body().getToken();
 
                     // 4. USE UTILITY METHOD to store the token securely
                     prefManager.saveToken(jwtToken);
 
                     // Accessing corrected field
-                    String userIdentifier = loginData.user.upiId;
-                    Log.d("LOGIN", "Logged in as: " + userIdentifier + " JWT Token: " + loginData.token);
+                    String userIdentifier = loginData.getUser().getUpiId();
+                    Log.d("LOGIN", "Logged in as: " + userIdentifier + " JWT Token: " + loginData.getToken());
 
                     Toast.makeText(getApplicationContext(), "Login Successful", Toast.LENGTH_SHORT).show();
 
                     // Login Success
-                    dataStore.setLoggedIn(true);
+//                    dataStore.setLoggedIn(true);
 
                     // Notify user and prompt for the next required step (Set PIN)
                     Toast.makeText(LoginActivity.this, "Login Successful! Please set your UPI PIN.", Toast.LENGTH_SHORT).show();

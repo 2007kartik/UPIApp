@@ -44,11 +44,21 @@
 
         <TextView
             style="@style/DetailLabel"
+            android:text="Sender UPI ID"/>
+        <TextView
+            android:id="@+id/text_detail_sender"
+            style="@style/DetailValue"
+            android:text="user@upi"/>
+
+        <TextView
+            style="@style/DetailLabel"
             android:text="Receiver UPI ID"/>
         <TextView
             android:id="@+id/text_detail_receiver"
             style="@style/DetailValue"
             android:text="user@upi"/>
+
+
 
         <TextView
             style="@style/DetailLabel"

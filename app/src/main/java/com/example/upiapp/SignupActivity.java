@@ -63,13 +63,24 @@ public class SignupActivity extends AppCompatActivity {
 
     private void performSignup() {
         String mobile = editMobile.getText().toString().trim();
-        String name = editName.getText().toString().trim(); // Get the name value
+        String name = editName.getText().toString().trim();
         String password = editPassword.getText().toString().trim();
         String confirmPassword = editConfirmPassword.getText().toString().trim();
 
-        String upiID = name + "@mockupi";
+        // 1. Check for Spaces FIRST
+        if (name.contains(" ")) {
+            Toast.makeText(this, "Enter Name without space, to be used as UPI ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // Simple validation for the demo
+        // 2. Check for non-alphabetic characters (numbers or special chars)
+        // This regex matches only A-Z and a-z
+        if (!name.matches("^[a-zA-Z]*$")) {
+            Toast.makeText(this, "Only Alphabets are permitted", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Standard validation
         if (mobile.isEmpty() || name.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, "Please fill in all fields.", Toast.LENGTH_SHORT).show();
             return;
@@ -85,16 +96,20 @@ public class SignupActivity extends AppCompatActivity {
             return;
         }
 
-        // --- DEMO SUCCESS LOGIC ---
+        // Construct the upiId as per contract: "name@mockupi"
+        String upiID = name + "@mockupi";
+
+        // Proceed with API call [cite: 7]
         ApiService apiService = ApiClient.getClient(this);
 
+        // SignupRequest uses upiId, name, password, pin, mobile, and deviceld [cite: 8-15]
         SignupRequest request = new SignupRequest(
-                upiID,
-                name,
-                password,
-                "1234",
-                mobile,
-                "DEVICE_A"
+                upiID,       // upild
+                name,        // name [cite: 10]
+                password,    // password [cite: 11]
+                "1234",      // default pin [cite: 12]
+                mobile,      // mobile [cite: 13]
+                "DEVICE_A"   // deviceld [cite: 14]
         );
         Log.d("SIGNUP", "Processing");
         apiService.signup(request).enqueue(new retrofit2.Callback<Void>() {

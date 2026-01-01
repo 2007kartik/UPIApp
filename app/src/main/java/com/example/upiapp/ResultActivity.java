@@ -31,10 +31,10 @@ public class ResultActivity extends AppCompatActivity {
         btnDone = findViewById(R.id.btn_done);
 
         // Get data passed from SendMoneyActivity
-        String status = getIntent().getStringExtra("STATUS");
-        String reason = getIntent().getStringExtra("REASON");
-        String txnId = getIntent().getStringExtra("TXN_ID");
-        int riskScore = getIntent().getIntExtra("RISK_SCORE", 0);
+        String status = getIntent().getStringExtra("TRANSACTION_STATUS");
+        String reason = getIntent().getStringExtra("TRANSACTION_REASON");
+        String txnId = getIntent().getStringExtra("TRANSACTION_ID");
+        int riskScore = getIntent().getIntExtra("TRANSACTION_RISK", 0);
 
         displayResult(status, reason, txnId, riskScore);
 

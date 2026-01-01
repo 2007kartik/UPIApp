@@ -2,89 +2,100 @@ package com.example.upiapp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.upiapp.models.Transaction;
-import com.example.upiapp.utils.LocalDataStore;
+
+import com.example.upiapp.models.TransferRequest;
+import com.example.upiapp.models.TransferResponse;
+import com.example.upiapp.service.ApiService;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ConfirmPinActivity extends AppCompatActivity {
 
     private EditText editUpiPin;
     private Button btnConfirmPayment;
     private TextView textPaymentSummary;
-    private LocalDataStore dataStore;
 
-    // Variables to hold incoming transaction details
     private String receiverId;
-    private double amount;
-    private String message;
-    private boolean isDeveloperMode;
+    private double amount; // Note: Contract uses int, ensure alignment
+    private String transactionType = "QR_CODE"; // Defaulting per contract example [cite: 59]
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_confirm_pin);
 
-        dataStore = new LocalDataStore(this);
-
         editUpiPin = findViewById(R.id.edit_upi_pin);
         btnConfirmPayment = findViewById(R.id.btn_confirm_payment);
         textPaymentSummary = findViewById(R.id.text_payment_summary);
 
-        // 1. Get Transaction Details from the Intent
         Intent intent = getIntent();
         receiverId = intent.getStringExtra("RECEIVER_ID");
         amount = intent.getDoubleExtra("AMOUNT", 0.0);
-        message = intent.getStringExtra("MESSAGE");
-        isDeveloperMode = intent.getBooleanExtra("IS_DEV_MODE", false);
 
-        // Display Summary
-        String summary = String.format("Paying ₹%.2f to %s", amount, receiverId);
-        textPaymentSummary.setText(summary);
+        textPaymentSummary.setText(String.format("Paying ₹%.2f to %s", amount, receiverId));
 
-        btnConfirmPayment.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                initiateFinalTransaction();
-            }
-        });
+        btnConfirmPayment.setOnClickListener(v -> initiateFinalTransaction());
     }
 
     private void initiateFinalTransaction() {
         String inputPin = editUpiPin.getText().toString().trim();
 
         if (inputPin.length() != 4) {
-            Toast.makeText(this, "Please enter the 4-digit UPI PIN.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please enter a 4-digit PIN.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 1. Validate PIN (against saved PIN from SetPinActivity)
-        String savedPin = dataStore.getSavedPin();
+        // 1. Build the Request Object following the Contract [cite: 53-68]
+        TransferRequest request = new TransferRequest();
+        request.toUpi = receiverId;
+        request.amount = (int) amount; // Casting to int for contract compatibility
+        request.pin = inputPin;
+        request.transactionType = transactionType;
 
-        if (savedPin == null || !inputPin.equals(savedPin)) {
-            Toast.makeText(this, "Incorrect UPI PIN.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // Mocking Device Metadata [cite: 60-63]
+        request.device = new TransferRequest.Device();
+        request.device.deviceId = "DEVICE_A";
+        request.device.deviceType = "ANDROID";
 
-        // 2. PIN is correct: Initiate the Fraud Check
-        // In a real app, the server handles this. Here, we call the local simulator.
-        Transaction resultTransaction = dataStore.simulateFraudCheck(receiverId, amount, message);
+        // Mocking Location Metadata [cite: 64-67]
+        request.location = new TransferRequest.Location();
+        request.location.city = "Mumbai";
+        request.location.country = "IN";
 
-        // 3. Save to History
-        dataStore.saveTransaction(resultTransaction);
+        // 2. Call the API using the context-aware ApiClient
+        ApiService apiService = ApiClient.getClient(this);
+        apiService.transfer(request).enqueue(new Callback<TransferResponse>() {
+            @Override
+            public void onResponse(Call<TransferResponse> call, Response<TransferResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    TransferResponse res = response.body();
 
-        // 4. Redirect to the Result Screen
-        Intent resultIntent = new Intent(ConfirmPinActivity.this, ResultActivity.class);
-        resultIntent.putExtra("TRANSACTION_STATUS", resultTransaction.getStatus());
-        resultIntent.putExtra("TRANSACTION_RISK", String.valueOf(resultTransaction.getRiskScore()));
-        resultIntent.putExtra("TRANSACTION_REASON", resultTransaction.getReason());
-        startActivity(resultIntent);
+                    // 3. Redirect to Result Screen with server data [cite: 70-75]
+                    Intent resultIntent = new Intent(ConfirmPinActivity.this, ResultActivity.class);
+                    resultIntent.putExtra("TRANSACTION_ID", res.transactionId);
+                    resultIntent.putExtra("TRANSACTION_STATUS", res.status);
+                    resultIntent.putExtra("TRANSACTION_RISK", res.riskScore);
+                    resultIntent.putExtra("TRANSACTION_REASON", res.message);
+                    startActivity(resultIntent);
+                    finish();
+                } else {
+                    Toast.makeText(ConfirmPinActivity.this, "Transaction Failed: " + response.message(), Toast.LENGTH_SHORT).show();
+                }
+            }
 
-        finish();
+            @Override
+            public void onFailure(Call<TransferResponse> call, Throwable t) {
+                Log.e("TRANSFER", "Error", t);
+                Toast.makeText(ConfirmPinActivity.this, "Network Error", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

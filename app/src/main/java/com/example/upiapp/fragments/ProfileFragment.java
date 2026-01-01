@@ -2,6 +2,7 @@ package com.example.upiapp.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,32 +14,39 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.upiapp.ApiClient;
 import com.example.upiapp.LoginActivity;
 import com.example.upiapp.R;
 import com.example.upiapp.SetPinActivity;
-import com.example.upiapp.SecretDeveloperActivity; // NEW IMPORT
-import com.example.upiapp.utils.LocalDataStore;
+import com.example.upiapp.SecretDeveloperActivity;
+import com.example.upiapp.models.ProfileResponse;
+import com.example.upiapp.service.ApiService;
+import com.example.upiapp.utils.SecurePrefManager;
+import com.google.android.material.switchmaterial.SwitchMaterial;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ProfileFragment extends Fragment {
 
-    private LocalDataStore dataStore;
+    private SecurePrefManager prefManager;
     private Button btnLogout;
     private Button btnChangeUpiPin;
-
-    // UI elements to display profile data
     private TextView textUsername, textPhoneNumber, textUpiId;
+    private View cardDeveloperMode;
+    private SwitchMaterial switchDeveloperMode;
 
-    // --- SECRET TAP LOGIC VARIABLES ---
+    // Secret Tap Logic
     private static final int REQUIRED_TAPS = 7;
-    private static final long RESET_TIME_MS = 1000; // 1 second window
+    private static final long RESET_TIME_MS = 1000;
     private int tapCount = 0;
     private long lastTapTime = 0;
-    // --- END SECRET TAP LOGIC ---
-
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
@@ -46,96 +54,89 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        dataStore = new LocalDataStore(getActivity());
+        // Initialize SecurePrefManager
+        prefManager = new SecurePrefManager(getActivity());
 
-        // Initialize UI components
+        // 1. Initialize UI components
         textUsername = view.findViewById(R.id.text_username);
-        // ... (other initialization code remains the same) ...
         textPhoneNumber = view.findViewById(R.id.text_phone_number);
         textUpiId = view.findViewById(R.id.text_upi_id);
         btnLogout = view.findViewById(R.id.btn_logout);
         btnChangeUpiPin = view.findViewById(R.id.btn_change_upi_pin);
 
-        // Assuming your profile layout has a TextView for the username with ID: R.id.text_username
-        // We set the secret tap listener on the username field.
+        // Find Developer Card (Parent of Parent of Switch) and the Switch itself
+        switchDeveloperMode = view.findViewById(R.id.switch_developer_mode);
+        cardDeveloperMode = (View) switchDeveloperMode.getParent().getParent();
+
+        // 2. Sync UI with Persisted Developer Mode Preference
+        boolean isDevModeActive = prefManager.isDeveloperModeEnabled();
+        if (isDevModeActive) {
+            cardDeveloperMode.setVisibility(View.VISIBLE);
+            switchDeveloperMode.setChecked(true);
+        } else {
+            cardDeveloperMode.setVisibility(View.GONE);
+            switchDeveloperMode.setChecked(false);
+        }
+
+        // 3. Set Listeners
         textUsername.setOnClickListener(v -> handleSecretTap());
 
-        // ... (rest of the listeners and displayProfileData call remain the same) ...
+        btnLogout.setOnClickListener(v -> performLogout());
 
-        // Listener for Logout
-        btnLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                performLogout();
+        btnChangeUpiPin.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), SetPinActivity.class);
+            startActivity(intent);
+        });
+
+        // Toggle Listener to sync Switch state with SecurePrefs and Visibility
+        switchDeveloperMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefManager.setDeveloperMode(isChecked);
+            if (!isChecked) {
+                // Hide card immediately if turned off
+                cardDeveloperMode.setVisibility(View.GONE);
+                Toast.makeText(getActivity(), "Developer mode disabled", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getActivity(), "Developer mode enabled", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Listener for Change UPI PIN
-        btnChangeUpiPin.setOnClickListener(new View.OnClickListener() {
+        // 4. Fetch real-time data from Profile API [cite: 39]
+        fetchProfileData();
+    }
+
+    private void fetchProfileData() {
+        // ApiClient handles the "Authorization: Bearer <JWT>" header [cite: 5]
+        ApiService apiService = ApiClient.getClient(getContext());
+
+        apiService.getProfile().enqueue(new Callback<ProfileResponse>() {
             @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), SetPinActivity.class);
-                startActivity(intent);
-                Toast.makeText(getActivity(), "Redirecting to Change UPI PIN screen.", Toast.LENGTH_SHORT).show();
+            public void onResponse(@NonNull Call<ProfileResponse> call, @NonNull Response<ProfileResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ProfileResponse profile = response.body();
+
+                    // Update UI with data from API contract [cite: 42, 43, 44]
+                    textUsername.setText(profile.upiId != null ? profile.name : "N/A");
+                    textPhoneNumber.setText(profile.mobile != null ? "+91 " + profile.mobile : "N/A");
+                    textUpiId.setText(profile.upiId != null ? profile.upiId : "N/A");
+                } else {
+                    Log.e("PROFILE_ERROR", "Error code: " + response.code());
+                    Toast.makeText(getActivity(), "Failed to load profile data", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ProfileResponse> call, @NonNull Throwable t) {
+                Log.e("PROFILE_ERROR", "Network Failure", t);
+                textUsername.setText("Error loading profile");
             }
         });
-
-        displayProfileData(); // Ensure this is still called
-    }
-
-    /**
-     * Handles the logic for the secret consecutive taps.
-     */
-    private void handleSecretTap() {
-        long currentTime = System.currentTimeMillis();
-
-        if (currentTime - lastTapTime < RESET_TIME_MS) {
-            // Tap is within the required time window
-            tapCount++;
-
-            if (tapCount == REQUIRED_TAPS) {
-                // SUCCESS: Open the secret page
-                Toast.makeText(getActivity(), "Developer mode unlocked!", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(getActivity(), SecretDeveloperActivity.class);
-                startActivity(intent);
-
-                // Reset counter after success
-                tapCount = 0;
-            } else if (tapCount > REQUIRED_TAPS - 3) {
-                // Give a hint when the user is close (e.g., last 3 taps)
-                Toast.makeText(getActivity(), (REQUIRED_TAPS - tapCount) + " taps remaining...", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            // Tap time window expired, reset the counter
-            tapCount = 1;
-        }
-
-        lastTapTime = currentTime;
-    }
-
-
-    private void displayProfileData() {
-        // ... (displayProfileData logic remains the same) ...
-        String mobileNumber = dataStore.getSavedUsername();
-        String displayName = dataStore.getSavedDisplayName();
-
-        String displayMobile = mobileNumber != null ? "+91 " + mobileNumber : "N/A";
-        String displayUpiId = mobileNumber != null ? mobileNumber + "@demoupi" : "N/A";
-
-        if (mobileNumber != null) {
-            textUsername.setText(displayName);
-            textPhoneNumber.setText(displayMobile);
-            textUpiId.setText(displayUpiId);
-        } else {
-            textUsername.setText("Guest User");
-            textPhoneNumber.setText("N/A");
-            textUpiId.setText("N/A");
-        }
     }
 
     private void performLogout() {
-        // ... (performLogout logic remains the same) ...
-        dataStore.logout();
+        // Clear secure preferences to reset identity [cite: 5]
+        if (prefManager != null) {
+            prefManager.clearData();
+        }
 
         Toast.makeText(getActivity(), "Logged out successfully.", Toast.LENGTH_SHORT).show();
 
@@ -146,5 +147,27 @@ public class ProfileFragment extends Fragment {
         if (getActivity() != null) {
             getActivity().finish();
         }
+    }
+
+    private void handleSecretTap() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastTapTime < RESET_TIME_MS) {
+            tapCount++;
+            if (tapCount == REQUIRED_TAPS) {
+                // Unlock Developer Mode and Persist State
+                prefManager.setDeveloperMode(true);
+                cardDeveloperMode.setVisibility(View.VISIBLE);
+                switchDeveloperMode.setChecked(true);
+
+                Toast.makeText(getActivity(), "Developer mode unlocked!", Toast.LENGTH_SHORT).show();
+
+                // Open Secret Activity
+                startActivity(new Intent(getActivity(), SecretDeveloperActivity.class));
+                tapCount = 0;
+            }
+        } else {
+            tapCount = 1;
+        }
+        lastTapTime = currentTime;
     }
 }

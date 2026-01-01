@@ -1,5 +1,6 @@
 package com.example.upiapp;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.graphics.Color;
@@ -8,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class TransactionDetailsActivity extends AppCompatActivity {
 
+    @SuppressLint("DefaultLocale")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -15,6 +17,7 @@ public class TransactionDetailsActivity extends AppCompatActivity {
 
         // Initialize TextViews
         TextView textStatus = findViewById(R.id.text_detail_status);
+        TextView textSender = findViewById(R.id.text_detail_sender);
         TextView textReceiver = findViewById(R.id.text_detail_receiver);
         TextView textAmount = findViewById(R.id.text_detail_amount);
         TextView textMessage = findViewById(R.id.text_detail_message);
@@ -25,6 +28,7 @@ public class TransactionDetailsActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             String status = extras.getString("STATUS", "UNKNOWN");
+            String sender = extras.getString("SENDER", "N/A");
             String receiver = extras.getString("RECEIVER", "N/A");
             double amount = extras.getDouble("AMOUNT", 0.0);
             String message = extras.getString("MESSAGE", "No message provided.");
@@ -34,6 +38,7 @@ public class TransactionDetailsActivity extends AppCompatActivity {
             // Populate UI
             textStatus.setText(status);
             textReceiver.setText(receiver);
+            textSender.setText(sender);
             textAmount.setText(String.format("₹ %.2f", amount));
             textMessage.setText(message);
             textRiskScore.setText(riskScore);

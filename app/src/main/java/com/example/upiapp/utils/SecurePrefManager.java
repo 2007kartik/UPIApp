@@ -42,4 +42,19 @@ public class SecurePrefManager {
     public String getToken() {
         return securePrefs != null ? securePrefs.getString(KEY_TOKEN, null) : null;
     }
+
+    // Inside SecurePrefManager.java
+    // Inside SecurePrefManager.java
+    public void setDeveloperMode(boolean enabled) {
+        securePrefs.edit().putBoolean("developer_mode_enabled", enabled).apply();
+    }
+
+    public boolean isDeveloperModeEnabled() {
+        // Defaults to false as per standard hidden developer options behavior
+        return securePrefs.getBoolean("developer_mode_enabled", false);
+    }
+
+    public void clearData() {
+        securePrefs.edit().clear();
+    }
 }
