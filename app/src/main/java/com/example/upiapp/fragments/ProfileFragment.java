@@ -48,6 +48,9 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_profile, container, false);
+
+
+
     }
 
     @Override
@@ -102,6 +105,33 @@ public class ProfileFragment extends Fragment {
 
         // 4. Fetch real-time data from Profile API [cite: 39]
         fetchProfileData();
+
+        // --- PASTE THIS INSIDE onViewCreated ---
+
+// 1. Initialize the Night Mode Switch from the XML ID
+        com.google.android.material.switchmaterial.SwitchMaterial switchNightMode = view.findViewById(R.id.switch_night_mode);
+
+// 2. Sync Switch state with Saved Preference on Load
+// We use SecurePrefManager to check if night mode was previously enabled
+        boolean isNightMode = prefManager.isNightModeEnabled(); // Ensure this method exists in SecurePrefManager
+        switchNightMode.setChecked(isNightMode);
+
+// 3. Set the Listener to change theme and save preference
+        switchNightMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Save the choice in SecurePrefManager
+            prefManager.setNightMode(isChecked); // Ensure this method exists in SecurePrefManager
+
+            // Apply the theme change immediately
+            if (isChecked) {
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
+                android.widget.Toast.makeText(getActivity(), "Night Mode Enabled", android.widget.Toast.LENGTH_SHORT).show();
+            } else {
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
+                android.widget.Toast.makeText(getActivity(), "Night Mode Disabled", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
     }
 
     private void fetchProfileData() {

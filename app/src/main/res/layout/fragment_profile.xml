@@ -13,18 +13,46 @@
         android:padding="24dp"
         android:gravity="center_horizontal">
 
-        <!-- Header -->
-        <TextView
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Your Profile"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="#1A1A1A"
             android:layout_marginTop="20dp"
-            android:layout_marginBottom="32dp"/>
+            android:layout_marginBottom="32dp">
 
-        <!-- Profile Picture Container -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Your Profile"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A1A"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_day"
+                    android:layout_marginEnd="8dp"
+                    app:tint="#673AB7" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_night_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:thumbTint="#673AB7"
+                    app:trackTint="#E1BEE7"/>
+            </LinearLayout>
+        </RelativeLayout>
+
         <FrameLayout
             android:layout_width="100dp"
             android:layout_height="100dp"
@@ -41,7 +69,6 @@
                 android:contentDescription="Profile Icon"/>
         </FrameLayout>
 
-        <!-- Profile Info Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -56,7 +83,6 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
-                <!-- User Info Item -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -97,7 +123,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Divider -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
@@ -105,7 +130,6 @@
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="4dp"/>
 
-                <!-- UPI ID Info Item -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -146,7 +170,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Divider -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
@@ -154,7 +177,6 @@
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="4dp"/>
 
-                <!-- Mobile Number Info Item -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -198,7 +220,6 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Developer Mode Card -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_developer_mode"
             android:layout_width="match_parent"
@@ -242,14 +263,12 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginTop="10dp">
 
-            <!-- Change UPI PIN Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_change_upi_pin"
                 android:layout_width="match_parent"
@@ -265,7 +284,6 @@
                 android:elevation="2dp"
                 android:layout_marginBottom="12dp"/>
 
-            <!-- Logout Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_logout"
                 android:layout_width="match_parent"

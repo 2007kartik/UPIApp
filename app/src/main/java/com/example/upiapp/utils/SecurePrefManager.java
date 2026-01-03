@@ -57,4 +57,13 @@ public class SecurePrefManager {
     public void clearData() {
         securePrefs.edit().clear();
     }
+
+
+    public void setNightMode(boolean enabled) {
+        securePrefs.edit().putBoolean("night_mode_enabled", enabled).apply();
+    }
+
+    public boolean isNightModeEnabled() {
+        return securePrefs.getBoolean("night_mode_enabled", false);
+    }
 }
