@@ -26,7 +26,7 @@ public class ConfirmPinActivity extends AppCompatActivity {
 
     private String receiverId;
     private double amount; // Note: Contract uses int, ensure alignment
-    private String transactionType = "QR_CODE"; // Defaulting per contract example [cite: 59]
+    private String transactionType = "TRANSFER"; // Defaulting per contract example [cite: 59]
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

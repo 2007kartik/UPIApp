@@ -73,7 +73,7 @@ public class SendMoneyDeveloperModeActivity extends AppCompatActivity {
         sample.toUpi = "userB@mockupi"; // [cite: 56]
         sample.amount = 500;            // [cite: 57]
         sample.pin = "1234";            // [cite: 58]
-        sample.transactionType = "QR_CODE"; // [cite: 59]
+        sample.transactionType = "TRANSFER"; // [cite: 59]
 
         sample.device = new TransferRequest.Device();
         sample.device.deviceId = "DEVICE_A"; // [cite: 61]

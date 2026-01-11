@@ -1,5 +1,6 @@
 package com.example.upiapp;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -43,7 +44,8 @@ public class ResultActivity extends AppCompatActivity {
         String status = getIntent().getStringExtra("TRANSACTION_STATUS");
         String reason = getIntent().getStringExtra("TRANSACTION_REASON");
         String txnId = getIntent().getStringExtra("TRANSACTION_ID");
-        int riskScore = getIntent().getIntExtra("TRANSACTION_RISK", 0);
+        Double riskScore = getIntent().getDoubleExtra("TRANSACTION_RISK", 0.0);
+
 
         displayResult(status, reason, txnId, riskScore);
 
@@ -65,7 +67,8 @@ public class ResultActivity extends AppCompatActivity {
         });
     }
 
-    private void displayResult(String status, String reason, String txnId, int riskScore) {
+    @SuppressLint("SetTextI18n")
+    private void displayResult(String status, String reason, String txnId, Double riskScore) {
         String fullReason = reason + " (Risk Score: " + riskScore + ")";
 
         if ("APPROVED".equals(status)) {

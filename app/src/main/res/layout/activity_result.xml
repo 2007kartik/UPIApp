@@ -43,7 +43,7 @@
             android:layout_marginTop="24dp"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:text="Transaction Status"
+            android:text="Transaction Successful"
             android:textColor="#1A1A1A" />
 
         <!-- Reason Text -->
@@ -58,7 +58,7 @@
             android:gravity="center"
             android:textSize="16sp"
             android:lineSpacingExtra="4dp"
-            android:text="Reason/Fraud Engine Decision will be shown here."
+            android:text="ML Engine: Safe Transaction. Ledger updated."
             android:textColor="#6B7280" />
 
         <!-- Transaction Details Card -->
